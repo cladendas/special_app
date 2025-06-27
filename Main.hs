@@ -3,9 +3,11 @@
 
 import Network.HTTP.Simple
 -- import Data.Aeson (Value, object, (.=))
+import Data.Char
 import Data.Aeson (ToJSON, encode)
-import Data.Csv (FromNamedRecord, decodeByName)
+import Data.Csv (FromNamedRecord(..), decodeByName, (.:))
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Generics (Generic)
 import Data.Aeson (Value, object, (.=), Array)
 import qualified Data.Vector as V
@@ -29,7 +31,25 @@ data Lead = Lead
 instance ToJSON Lead
 
 -- Делаем тип десериализуемым из CSV
-instance FromNamedRecord Lead -- Эта строка говорит: "Создай автоматическую реализацию для парсинга CSV в Lead"
+-- instance FromNamedRecord Lead -- Эта строка говорит: "Создай автоматическую реализацию для парсинга CSV в Lead"
+
+-- можно указать явное соответствие
+-- instance FromNamedRecord Lead where
+--   parseNamedRecord r = Lead
+--     <$> r .: "created"  -- берём поле "created"
+--     <*> r .: "name"     -- затем поле "name"
+--     <*> r .: "phone"    -- затем поле "phone"
+--     <*> r .: "referer"  -- затем поле "referer"
+
+instance FromNamedRecord Lead where
+  parseNamedRecord r = do
+    created <- r .: "created"
+    name <- r .: "name"
+    referer <- r .: "referer"
+    rawPhone <- r .: "phone"
+    let phone = T.filter isDigit rawPhone
+    return $ Lead created name phone referer
+
 
 main :: IO ()
 main = do
@@ -39,8 +59,8 @@ main = do
 
     case decodeByName csvData of
       Left err -> putStrLn $ "Ошибка парсинга CSV: " ++ err
-      Right (_, peopleVector) -> do
-        putStrLn $ "Успешно прочитано " ++ show (V.length peopleVector) ++ " записей"
+      Right (_, itemsVector) -> do
+        putStrLn $ "Успешно прочитано " ++ show (V.length itemsVector) ++ " записей"
 
-        let jsonData = encode (peopleVector :: V.Vector Lead)
+        let jsonData = encode (itemsVector :: V.Vector Lead)
         BSL.putStrLn jsonData
