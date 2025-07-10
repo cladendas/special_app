@@ -1,0 +1,13 @@
+# json-from-csv
+
+Считывает csv и выводит его в формате json
+
+Работает только по указанному типу
+```haskell
+data Lead = Lead
+  { created :: Text
+  , name  :: Text
+  , phone :: Text
+  , referer :: Text
+  } deriving (Generic, Show)
+```
