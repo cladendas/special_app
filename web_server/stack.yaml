@@ -1,0 +1,8 @@
+resolver: lts-23.25
+
+packages:
+- .
+
+extra-deps: []
+
+flags: {}
